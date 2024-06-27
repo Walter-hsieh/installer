@@ -1,7 +1,5 @@
-# smart_pdf_renamer.py
-
 import os
-from tkinter import Tk, Label, Button, filedialog, Text, Scrollbar, Frame, Entry, BOTH, RIGHT, Y, LEFT
+from tkinter import Tk, Label, Button, filedialog, Text, Scrollbar, Frame, Entry, BOTH, RIGHT, Y, LEFT, OptionMenu, StringVar
 import tkinter as tk
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.document_loaders import PyPDFLoader
@@ -27,10 +25,10 @@ def rename(pdfs_dir, names):
         new_file_path = os.path.join(pdfs_dir, new_name)
         os.rename(old_file_path, new_file_path)
 
-def ai_reader(api, pdfs_dir):
+def ai_reader(api, model, pdfs_dir):
     files = numbering(pdfs_dir)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model=model,
         google_api_key=api
     )
 
@@ -63,7 +61,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("PDF Renamer")
-        self.root.geometry("400x300")
+        self.root.geometry("400x350")
 
         api_frame = Frame(root)
         api_frame.pack(pady=10)
@@ -71,6 +69,15 @@ class App:
         self.label_api.grid(row=0, column=0, padx=5)
         self.entry_api = Entry(api_frame, width=30)
         self.entry_api.grid(row=0, column=1, padx=5)
+
+        model_frame = Frame(root)
+        model_frame.pack(pady=10)
+        self.label_model = Label(model_frame, text="Select Model:", font=("Helvetica", 12))
+        self.label_model.grid(row=0, column=0, padx=5)
+        self.model_var = StringVar(model_frame)
+        self.model_var.set("gemini-1.5-flash")
+        self.model_menu = OptionMenu(model_frame, self.model_var, "gemini-1.0", "gemini-1.5-flash", "gemini-1.5-pro")
+        self.model_menu.grid(row=0, column=1, padx=5)
 
         dir_frame = Frame(root)
         dir_frame.pack(pady=10)
@@ -99,7 +106,7 @@ class App:
     def run_renamer(self):
         if hasattr(self, 'pdfs_dir'):
             os.chdir(self.pdfs_dir)
-            ai_reader(self.entry_api.get(), self.pdfs_dir)
+            ai_reader(self.entry_api.get(), self.model_var.get(), self.pdfs_dir)
             self.log("Renaming Completed")
         else:
             self.log("Please select a directory first")
